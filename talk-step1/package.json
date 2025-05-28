@@ -1,0 +1,15 @@
+{
+  "name": "talk-step1",
+  "version": "1.0.0",
+  "main": "src/main.js",
+  "scripts": {
+    "server": "nodemon src/main.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "koa": "^3.0.0"
+  }
+}
