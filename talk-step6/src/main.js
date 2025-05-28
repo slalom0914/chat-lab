@@ -14,6 +14,7 @@ const app = websockify(new Koa())//10 - 머지
 const route = require('koa-route')//11 - 요청을 구분 해서 처리
 const { initializeApp } = require("firebase/app");//로컬에서 참조함.
 const { getFirestore } = require("firebase/firestore");//로컬에서 참조함.
+const { setInterval } = require('timers/promises')
 const firebaseConfig = {
   apiKey: "AIzaSyC-L1F_gW4rj75DXfvlce7y77bQlwz0yAM",
   authDomain: "kosmo250520.firebaseapp.com",
@@ -26,7 +27,7 @@ const firebaseConfig = {
 //Firebase 앱 초기화
 const talkApp = initializeApp(firebaseConfig)
 const db = getFirestore(talkApp)
-console.log(db);
+//console.log(db);
 //정적 리소스에 대한 파일 경로 설정하기
 const staticPath = path.join(__dirname, './views')//4
 
@@ -76,6 +77,20 @@ app.ws.use(
   //ws는 websocket을 의미한다.
   //-> /test/:id로 요청이 오면 아래를 처리하라.
   route.all('/ws', async(ctx) => {
+
+    //Ping/Pong설정하기
+    //일정시간이 지나면 연결이 끊어진다. - 아무런 움직임이 없는 상태로.....
+    const interval = setInterval(()=>{
+      if(ctx.websocket.readyState === ctx.websocket.OPEN){
+        //서버측에서 ping 메시지 전송한다.
+        ctx.websocket.ping()
+      }
+    },30000) //30초마다 ping전송
+
+    ctx.websocket.on('pong',()=>{
+      console.log('클라이언트로 부터 pong메시지 수신');
+    })
+
     //클라이언트 측에서 요청이 오면 콜백 핸들러가 반응함.
   ctx.websocket.on('message', (data) => {
     //클라이언트가 보낸 메시지를 출력한다.
