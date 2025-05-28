@@ -12,6 +12,21 @@ const mount = require('koa-mount') //8 - views와 public 구분
 const websockify = require('koa-websocket')//9 - 웹소켓
 const app = websockify(new Koa())//10 - 머지
 const route = require('koa-route')//11 - 요청을 구분 해서 처리
+const { initializeApp } = require("firebase/app");//로컬에서 참조함.
+const { getFirestore } = require("firebase/firestore");//로컬에서 참조함.
+const firebaseConfig = {
+  apiKey: "AIzaSyC-L1F_gW4rj75DXfvlce7y77bQlwz0yAM",
+  authDomain: "kosmo250520.firebaseapp.com",
+  databaseURL: "https://kosmo250520-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "kosmo250520",
+  storageBucket: "kosmo250520.firebasestorage.app",
+  messagingSenderId: "866099520808",
+  appId: "1:866099520808:web:797d61891d717ce2f79c1d"
+};
+//Firebase 앱 초기화
+const talkApp = initializeApp(firebaseConfig)
+const db = getFirestore(talkApp)
+console.log(db);
 //정적 리소스에 대한 파일 경로 설정하기
 const staticPath = path.join(__dirname, './views')//4
 

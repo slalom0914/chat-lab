@@ -1,0 +1,4 @@
+node_modules/
+public/images/
+# 환경 변수 파일 무시
+.env
