@@ -13,7 +13,7 @@ const websockify = require('koa-websocket')//9 - 웹소켓
 const app = websockify(new Koa())//10 - 머지
 const route = require('koa-route')//11 - 요청을 구분 해서 처리
 const { initializeApp } = require("firebase/app");//로컬에서 참조함.
-const { getFirestore } = require("firebase/firestore");//로컬에서 참조함.
+const { getFirestore, collection } = require("firebase/firestore");//로컬에서 참조함.
 const { setInterval } = require('timers/promises')
 const firebaseConfig = {
   apiKey: "AIzaSyC-L1F_gW4rj75DXfvlce7y77bQlwz0yAM",
@@ -92,6 +92,18 @@ app.use(async(ctx) => {
   }
 });//end of use
 
+//앞에 대화 내용을 가져오는 함수  배치하기
+const getChatsCollection = async() => {
+  //firestore api
+  const q = query(collection(db, 'talk250529'))
+  const snapshot = await getDocs(q)
+  //data는 n건의 정보를 쥐고 있다.[{},{},{}], {[{},{},{}]}
+  //forEach문 map문
+  const data = snapshot.docs.map(doc => doc.data())
+  return data
+}//end of getChatsCollection
+
+
 // npm i koa-route 먼저 설치한다.
 // 왜나면 koa-websocket과 koa-route 서로 의존관계 있다.
 // Using routes
@@ -99,6 +111,22 @@ app.ws.use(
   //ws는 websocket을 의미한다.
   //-> /test/:id로 요청이 오면 아래를 처리하라.
   route.all('/ws', async(ctx) => {
+    console.log('새로 입장한 사람이라면.....여기부터 시작함.');
+    //아래 함수는 firestore에서 데이터를 읽어오기 - Back-End(NodeJS, Spring Boot, python, C#)
+    //DB를 연동하는 코드가 안보인다
+    const talks = getChatsCollection()
+    //앞에 문자열을 붙여서 출력하는 경우 아닌 경우와 출력 결과가
+    //다르다 기억함. - 같은 경우도 있다.- 그래서 햇갈린다. HTMLElement...
+    //console.log('talks : '+ talks);
+    //console.log(talks);
+    ctx.websocket.send(JSON.stringify({
+      //클라이언트가 입장했을 때 sync인지 talk인지를 결정한다.- 서버
+      //그래서 서버가 결정해야 하므로 type에는 상수를 쓴다.
+      type:'sync',//firestore에서 가져온다.
+      payload: {
+        talks,//변수 - talks담긴 값은 어디서 가져오나요?
+      }
+    }))
 
     //Ping/Pong설정하기
     //일정시간이 지나면 연결이 끊어진다. - 아무런 움직임이 없는 상태로.....
@@ -114,37 +142,66 @@ app.ws.use(
     })
 
     //클라이언트 측에서 요청이 오면 콜백 핸들러가 반응함.
-  ctx.websocket.on('message', (data) => {
+  ctx.websocket.on('message', async(data) => {
     //클라이언트가 보낸 메시지를 출력한다.
-    console.log(typeof data);//object인가? 아니면 string
+    console.log(typeof data);//object이다 .{type:'',payload:{}}
     if(typeof JSON.stringify(data) !== 'string'){
       return;//if문에서 return을 만나면 탈출함- 콜백 핸들러 빠져나감.
     }
     //string이면 여기로 온다.
-    const { nickname, message } = JSON.parse(data)
+    const { nickname, message, curtime } = JSON.parse(data)
     console.log(`${nickname}, ${message}`);
 
+    try {
+      //예외가 발생할 가능성이 있는 코드 작성한다.
+      //만일 예외가 발생하지 않으면 catch문 실행기회를 가지 않는다.
+      const docRef = await addDoc(collection(db, 'talk250529'),{
+        type: 'talk',
+        payload: {
+          nickname: nickname,
+          message: message,
+          curtime: curtime
+        }
+      })//end of addDoc
+      //여기까지 진행이 되었다면
+      console.log('저장성공');
+    } catch (error) {
+      console.error('저장 실패.',error);
+    }
+    /******************************************************************
+     * BroadCaste 섹션
+     * 
+     ******************************************************************/
     /*
     문제제기 - 현재는 메시지를 보낸 사람에게만 돌려주고 있는 유니케스트이다.
     만일 모든 사람에게 메시지를 보내고 싶다면 어떻게 해야 할까?
     브로드캐스트 처리를 하면 된다.
     */
-
+    //서버에 접속한 여러 클라이언트에 대한 접점(소켓-서버에 있지만 client소켓)
+    //서버에 있는 소켓이지만 클라이언트 소켓이므로 청취한 메시지를 쓸 수 있다(말할 수있다.)
     const { server } = app.ws
     //null에 대한 체크를 한다. - 안전성
     //server가 널이면 속성이나 함수를 호출할 수 없다.
     if(!server){//앞에 not이 있다.
       return //return을 만나면 use함수 전체를 탈출함.
     }
-
+    //clients - 소켓 여러개
+    //client - 한개 소켓
+    //물리적으로 떨어져 있는 클라이언트 소켓 정보를 서버에서 쥐고 있다.
+    //서버가 쥐고 있는 모든 클라이언트에게 메시지를 보낸다.
     server.clients.forEach(client => {
+      //if(client.readyState === client.CLOSED){
       if(client.readyState === client.OPEN){
         client.send(JSON.stringify({
-          message: message,
-          nickname: nickname,
+          type: 'talk',
+          payload: {
+            nickname:nickname,
+            message: message,
+            curtime: curtime, //ES5
+          }
         }))
-      }
-    })
+      }//end of if
+    })//end of forEach
   });
 }));
 

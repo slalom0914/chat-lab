@@ -21,7 +21,7 @@
     throw new Error('formEl or inputEl or chatsEl is null')
   }
   const chats = []
-  
+  //사용자가 입력한 메시지를 보내는 것은 submit에서 한다.
   formEl.addEventListener('submit',(e)=>{
     //페이지가 refresh되지 않고 다음 액션을 정상적으로 
     //처리하도록 이벤트 전이를 막음
@@ -36,12 +36,15 @@
       message: inputEl.value}))
     inputEl.value = '' //후처리 //서버측 출력
   })
-  //서버에서 보낸 정보를 받아서 출력하기
+  //서버에서 보낸 정보를 받아서 출력하기 - 
+  //서버에서 보낸 메시지 청취하기
+  //onmessage이벤트 핸들러를 websocket제공한다.
+  //npm i koa-websocket 
   socket.addEventListener('message', (event)=>{
     //서버에서 보낸 메시지 청취하기
-    chats.push(JSON.parse(event.data))
+    chats.push(JSON.parse(event.data))//청취한 메시지를 배열에 담는다.
     chatsEl.innerHTML = '' //화면 초기화
-    chats.forEach(({nickname, message}) => {
+    chats.forEach(({nickname, message}) => {//배열에 담긴 여러 메시지를 출력한다
       const div = document.createElement('div')
       div.innerText = `${nickname}: ${message}[12:34]`
       chatsEl.appendChild(div)
