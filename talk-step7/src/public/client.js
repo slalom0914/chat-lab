@@ -59,13 +59,15 @@
   //이벤트가 감지되었을 때(상태값이 변경될때마다)
   //서버에서 전송한 메시지를 모두 다 받았을 때 주입된다.
   //{data:{type:'', payload:{nickname:'키위',message:'메시지',curtime:''}}}
-  socket.addEventListener('message', function(event){
+  socket.addEventListener('message', (event) => {
+    console.log(event.data);
     const { type, payload } = JSON.parse(event.data)
     console.log('type ==> '+ type);
-    console.log('payload ==> '+ payload);//[object Object] - Dataset - 백엔드
-    console.log('nickname ==> '+ payload.nickname);
-    console.log('message ==> '+ payload.message);
-    console.log('curtime ==> '+ payload.curtime);
+    console.log(payload);
+    //console.log('payload ==> '+ payload);//[object Object] - Dataset - 백엔드
+    //console.log('nickname ==> '+ payload.nickname);
+    //console.log('message ==> '+ payload.message);
+    //console.log('curtime ==> '+ payload.curtime);
     //아래 조건문에서 사용하는 type은 어디서 가져오나요?
     //
     if('sync' === type){
@@ -80,7 +82,10 @@
       console.log('talk');
       //insert here - 서버에서 청취한 object를 chats배열에 push한다.
       const talk = payload
+      console.log(talk);
+      //console.log(JSON.stringify(talk));
       chats.push(talk)
+      console.log(chats);
     }
     drawChats()//sync일때나 talk일때 공통이다.
     //반드시 조건문 밖에서 호출할것. -위치

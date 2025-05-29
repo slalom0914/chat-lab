@@ -13,8 +13,8 @@ const websockify = require('koa-websocket')//9 - 웹소켓
 const app = websockify(new Koa())//10 - 머지
 const route = require('koa-route')//11 - 요청을 구분 해서 처리
 const { initializeApp } = require("firebase/app");//로컬에서 참조함.
-const { getFirestore, collection } = require("firebase/firestore");//로컬에서 참조함.
-const { setInterval } = require('timers/promises')
+const { getFirestore, collection, query, addDoc, getDocs } = require("firebase/firestore");//로컬에서 참조함.
+
 const firebaseConfig = {
   apiKey: "AIzaSyC-L1F_gW4rj75DXfvlce7y77bQlwz0yAM",
   authDomain: "kosmo250520.firebaseapp.com",
@@ -91,15 +91,19 @@ app.use(async(ctx) => {
     ctx.body = 'Page Not Found'
   }
 });//end of use
-
+const chats = ''
 //앞에 대화 내용을 가져오는 함수  배치하기
 const getChatsCollection = async() => {
+  console.log('getChatsCollection 호출');
   //firestore api
   const q = query(collection(db, 'talk250529'))
+  console.log('q');
   const snapshot = await getDocs(q)
+  console.log('snapshot');
   //data는 n건의 정보를 쥐고 있다.[{},{},{}], {[{},{},{}]}
   //forEach문 map문
   const data = snapshot.docs.map(doc => doc.data())
+  console.log(data);
   return data
 }//end of getChatsCollection
 
@@ -118,7 +122,8 @@ app.ws.use(
     //앞에 문자열을 붙여서 출력하는 경우 아닌 경우와 출력 결과가
     //다르다 기억함. - 같은 경우도 있다.- 그래서 햇갈린다. HTMLElement...
     //console.log('talks : '+ talks);
-    //console.log(talks);
+    console.log(talks);
+    /*
     ctx.websocket.send(JSON.stringify({
       //클라이언트가 입장했을 때 sync인지 talk인지를 결정한다.- 서버
       //그래서 서버가 결정해야 하므로 type에는 상수를 쓴다.
@@ -127,7 +132,7 @@ app.ws.use(
         talks,//변수 - talks담긴 값은 어디서 가져오나요?
       }
     }))
-
+    */
     //Ping/Pong설정하기
     //일정시간이 지나면 연결이 끊어진다. - 아무런 움직임이 없는 상태로.....
     const interval = setInterval(()=>{
@@ -149,8 +154,8 @@ app.ws.use(
       return;//if문에서 return을 만나면 탈출함- 콜백 핸들러 빠져나감.
     }
     //string이면 여기로 온다.
-    const { nickname, message, curtime } = JSON.parse(data)
-    console.log(`${nickname}, ${message}`);
+    const { nickname, message } = JSON.parse(data)
+    console.log(`${nickname}, ${message}, ${curtime}`);
 
     try {
       //예외가 발생할 가능성이 있는 코드 작성한다.
@@ -191,16 +196,16 @@ app.ws.use(
     //서버가 쥐고 있는 모든 클라이언트에게 메시지를 보낸다.
     server.clients.forEach(client => {
       //if(client.readyState === client.CLOSED){
-      if(client.readyState === client.OPEN){
-        client.send(JSON.stringify({
-          type: 'talk',
-          payload: {
-            nickname:nickname,
-            message: message,
-            curtime: curtime, //ES5
-          }
-        }))
-      }//end of if
+      //if(client.readyState === client.OPEN){
+      client.send(JSON.stringify({
+        type: 'talk',
+        payload: {
+          nickname:nickname,
+          message: message,
+          curtime: curtime, //ES5
+        }
+      }))//end of send
+      //}//end of if
     })//end of forEach
   });
 }));
