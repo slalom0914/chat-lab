@@ -118,12 +118,11 @@ app.ws.use(
     console.log('새로 입장한 사람이라면.....여기부터 시작함.');
     //아래 함수는 firestore에서 데이터를 읽어오기 - Back-End(NodeJS, Spring Boot, python, C#)
     //DB를 연동하는 코드가 안보인다
-    const talks = getChatsCollection()
+    const talks = await getChatsCollection()
     //앞에 문자열을 붙여서 출력하는 경우 아닌 경우와 출력 결과가
     //다르다 기억함. - 같은 경우도 있다.- 그래서 햇갈린다. HTMLElement...
     //console.log('talks : '+ talks);
     console.log(talks);
-    /*
     ctx.websocket.send(JSON.stringify({
       //클라이언트가 입장했을 때 sync인지 talk인지를 결정한다.- 서버
       //그래서 서버가 결정해야 하므로 type에는 상수를 쓴다.
@@ -132,7 +131,7 @@ app.ws.use(
         talks,//변수 - talks담긴 값은 어디서 가져오나요?
       }
     }))
-    */
+    
     //Ping/Pong설정하기
     //일정시간이 지나면 연결이 끊어진다. - 아무런 움직임이 없는 상태로.....
     const interval = setInterval(()=>{
