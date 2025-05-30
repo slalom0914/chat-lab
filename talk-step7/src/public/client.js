@@ -134,5 +134,17 @@
     //새로운 메시지가 추가되면 자동으로 스크롤을 맨 아래로 이동하기
     chatsEl.scrollTo = chatsEl.scrollHeight
   }//end of drawChats
+  //종료 버튼을 눌렀을 때 이벤트 처리는 사전에 사용자가 선 진행 후에 
+  //호출되는 함수 이므로 위치 문제에 대해서는 관대한 편이다.
+  //단 다른 기능을 처리하는 함수 안에서 사용하는 것은 아니다.
+  //이벤트 소스를 먼저 선언하기
+  //exit는 <button id='exit'>
+  //버튼은 사용자 누른다. - 감지는 브라우저가 한다.
+  //인터셉트 할께 -> 클릭했을 때 채팅 창을 나가기 하려구 그래
+  const exit = document.querySelector('#exit')
+  exit.addEventListener('click', (event)=>{
+    alert('채팅창이 종료됩니다.')
+    window.location.href = '/'
+  })//end of exit
 
 })()
